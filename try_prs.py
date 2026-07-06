@@ -35,7 +35,10 @@ def purchase_all_items(list_id: str, user_id: str) -> int:
     Returns:
         The number of items marked as purchased.
     """
-    items = Item.query.filter_by(list_id=list_id).all()
+    if not user_id:
+        raise ValueError("Missing required field: user_id")
+
+    items = Item.query.filter_by(list_id=list_id, is_purchased=False).all()
     for item in items:
         item.is_purchased = True
         item.purchased_by = user_id
@@ -97,7 +100,11 @@ def purchase_all(list_id):
     data = request.get_json() or {}
     user_id = data.get("user_id")
 
-    count = purchase_all_items(list_id, user_id)
+    try:
+        count = purchase_all_items(list_id, user_id)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
     return jsonify({"purchased": count}), 200
 
 
